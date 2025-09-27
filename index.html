@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Currency Converter</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-weight: bold; margin-bottom: 5px; }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .currency-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+            margin-top: 15px;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .result {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .result .amount { font-size: 2.5rem; font-weight: bold; color: #667eea; margin: 10px 0; }
+        .quick-rates { margin-top: 20px; }
+        .rate-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .rate-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .rate-item .currency { font-size: 0.85rem; color: #666; }
+        .rate-item .value { font-size: 1.2rem; font-weight: bold; color: #333; }
+        .history-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .history-item .conversion { font-weight: bold; color: #333; }
+        .history-item .result { font-size: 1.3rem; font-weight: bold; color: #667eea; margin: 5px 0; }
+        .btn-clear {
+            background: #e53e3e;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            float: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Currency Converter</h1>
+            <p>Real-time exchange rates powered by Python</p>
+        </div>
+        
+        <div class="grid">
+            <div>
+                <div class="card">
+                    <div class="input-group">
+                        <label>Amount</label>
+                        <input type="number" id="amount" value="1">
+                    </div>
+                    
+                    <div class="currency-grid">
+                        <div class="input-group">
+                            <label>From</label>
+                            <select id="from">
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="GBP">GBP - British Pound</option>
+                                <option value="JPY">JPY - Japanese Yen</option>
+                                <option value="KRW">KRW - Korean Won</option>
+                                <option value="CNY">CNY - Chinese Yuan</option>
+                                <option value="AUD">AUD - Australian Dollar</option>
+                                <option value="CAD">CAD - Canadian Dollar</option>
+                                <option value="CHF">CHF - Swiss Franc</option>
+                                <option value="INR">INR - Indian Rupee</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>To</label>
+                            <select id="to">
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="GBP">GBP - British Pound</option>
+                                <option value="JPY">JPY - Japanese Yen</option>
+                                <option value="KRW" selected>KRW - Korean Won</option>
+                                <option value="CNY">CNY - Chinese Yuan</option>
+                                <option value="AUD">AUD - Australian Dollar</option>
+                                <option value="CAD">CAD - Canadian Dollar</option>
+                                <option value="CHF">CHF - Swiss Franc</option>
+                                <option value="INR">INR - Indian Rupee</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="convert()">Convert & Save</button>
+                    
+                    <div id="result" style="display:none;" class="result">
+                        <div id="result-text"></div>
+                    </div>
+                </div>
+                
+                <div class="card quick-rates" id="quick-rates" style="margin-top:20px;display:none;">
+                    <h3>Quick Rates</h3>
+                    <div class="rate-grid" id="rates-grid"></div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>History <button class="btn-clear" onclick="clearHistory()">Clear</button></h3>
+                <div style="clear:both;margin-top:15px;" id="history"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        async function convert() {
+            const amount = document.getElementById('amount').value;
+            const from = document.getElementById('from').value;
+            const to = document.getElementById('to').value;
+            
+            const response = await fetch(`/api/convert?amount=${amount}&from=${from}&to=${to}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const r = data.result;
+                document.getElementById('result-text').innerHTML = `
+                    <div>${r.amount} ${r.from} =</div>
+                    <div class="amount">${r.result.toLocaleString()} ${r.to}</div>
+                    <div>Rate: 1 ${r.from} = ${r.rate.toFixed(4)} ${r.to}</div>
+                `;
+                document.getElementById('result').style.display = 'block';
+                
+                let ratesHtml = '';
+                for (const [curr, rate] of Object.entries(data.popular_rates)) {
+                    ratesHtml += `
+                        <div class="rate-item">
+                            <div class="currency">${curr}</div>
+                            <div class="value">${rate.toFixed(2)}</div>
+                        </div>
+                    `;
+                }
+                document.getElementById('rates-grid').innerHTML = ratesHtml;
+                document.getElementById('quick-rates').style.display = 'block';
+                
+                loadHistory();
+            }
+        }
+        
+        async function loadHistory() {
+            const response = await fetch('/api/history');
+            const history = await response.json();
+            
+            if (history.length === 0) {
+                document.getElementById('history').innerHTML = '<p>No history yet</p>';
+                return;
+            }
+            
+            let html = '';
+            history.forEach(item => {
+                html += `
+                    <div class="history-item">
+                        <div class="conversion">${item.amount} ${item.from} to ${item.to}</div>
+                        <div class="result">${item.result.toLocaleString()} ${item.to}</div>
+                        <div style="font-size:0.85rem;color:#666;">Rate: ${item.rate.toFixed(4)}</div>
+                    </div>
+                `;
+            });
+            document.getElementById('history').innerHTML = html;
+        }
+        
+        async function clearHistory() {
+            await fetch('/api/clear');
+            loadHistory();
+        }
+        
+        loadHistory();
+    </script>
+</body>
+</html>
